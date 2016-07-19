@@ -1,0 +1,66 @@
+#!/bin/sh
+fgpio=/usr/sbin/fast-gpio
+
+gpioMotorDown=6
+gpioMotorUp=0
+gpioSensorDown=18
+gpioSensorUp=19
+
+#set blue led light
+expled 000022
+
+if [ "$1" = "close" ] ; then
+    useSensorGpio=$gpioSensorDown
+    useMotorGpio=$gpioMotorDown
+    expled 112200
+elif [ "$1" = "open" ] ; then
+    useSensorGpio=$gpioSensorUp
+    useMotorGpio=$gpioMotorUp
+    expled 002211
+else
+    expled 001100
+    exit 0
+fi
+
+#isDown=`$fgpio read $gpioSensorDown | cut -f4 -d" "`
+#echo "Is Down = $isDown"
+#isUp=`$fgpio read $gpioSensorUp | cut -f4 -d" "`
+#echo "Is Up = $isUp"
+
+echo "use Sensor gpio = $useSensorGpio and Motor gpio = $useMotorGpio"
+isSensor=`$fgpio read $useSensorGpio | cut -f4 -d" "`
+
+stamp=`date +%s`
+final=`expr $stamp + 7`
+run=true
+while [ $isSensor = "0" -a $final -gt $stamp ]
+do
+    isSensor=`$fgpio read $useSensorGpio | cut -f4 -d" "`
+    stamp=`date +%s`
+    if [ "$run" = "true" ]; then
+	run=false
+	expled aa0000
+	echo "start motor"
+        $fgpio set $useMotorGpio 1
+	#$fgpio pwm $useMotorGpio 1 50
+    fi
+#    echo $run
+done
+
+$fgpio set $gpioMotorDown 0
+$fgpio set $gpioMotorUp 0
+
+$fgpio read $gpioMotorDown
+$fgpio read $gpioMotorUp
+
+    isDown=`$fgpio read $gpioSensorDown | cut -f4 -d" "`
+#    echo "Is Down = $isDown"
+    isUp=`$fgpio read $gpioSensorUp | cut -f4 -d" "`
+#    echo "Is Up = $isUp"
+
+if [ $isSensor = "0" ];then
+	expled 662200
+else
+	# set green led light
+	expled 001100
+fi

@@ -1,0 +1,13 @@
+#!/bin/sh
+config=/etc/henhousecontrol.conf
+run=/root/DoorControl
+
+if [ -e $config ];then
+    auto=`cat $config | grep "auto"`
+    if [ -n $auto ];then
+	auto=`echo $auto | cut -f2 -d"="`
+	if [ "$auto" = "1" ];then 
+	    $run $1
+	fi
+    fi
+fi

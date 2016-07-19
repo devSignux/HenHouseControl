@@ -1,0 +1,20 @@
+#!/bin/sh
+crontabFile=/etc/crontabs/root
+DoorControl=/root/AutoDoorControl
+
+existingCrontabs=`cat $crontabFile | grep -v "$DoorControl"`
+#echo "$existingCrontabs"
+echo "$existingCrontabs" > $crontabFile
+#echo "3 3 * * * /root/CreateOpenAndCloseDoorCronJobs" > $crontabFile
+
+/usr/bin/wget -q -O /tmp/sun.info http://localhost/php/sun.php
+
+Hour=`cat /tmp/sun.info | cut -f1 -d";" | cut -f2 -d"=" | cut -f1 -d":"`
+Minute=`cat /tmp/sun.info | cut -f1 -d";" | cut -f2 -d"=" | cut -f2 -d":"`
+echo "$Minute $Hour * * * $DoorControl open" >> $crontabFile
+
+Hour=`cat /tmp/sun.info | cut -f2 -d";" | cut -f2 -d"=" | cut -f1 -d":"`
+Minute=`cat /tmp/sun.info | cut -f2 -d";" | cut -f2 -d"=" | cut -f2 -d":"`
+echo "$Minute $Hour * * * $DoorControl close" >> $crontabFile
+
+/etc/init.d/cron restart
